@@ -1,10 +1,18 @@
 FROM python:3.9-slim
 
+ENV PYTHONUNBUFFERED=1 \
+    PDM_VERSION=2.19.3
+
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install pdm==${PDM_VERSION}
 
-COPY app/ ./app/
+COPY app/pyproject.toml app/pdm.lock ./
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Install dependencies
+RUN pdm install --prod
+
+# Copy application code
+COPY app/src .
+
+ENTRYPOINT ["pdm", "run", "start"]

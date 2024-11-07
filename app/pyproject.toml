@@ -18,3 +18,7 @@ license = {text = "MIT"}
 
 [tool.pdm]
 distribution = false
+
+[tool.pdm.scripts]
+dev = "uvicorn src.restaurant_recommender.main:app --reload"
+start = "uvicorn src.restaurant_recommender.main:app"
