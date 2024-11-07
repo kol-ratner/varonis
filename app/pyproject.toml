@@ -1,0 +1,37 @@
+[project]
+name = "restaurant-recommender"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Kol Ratner", email = "60704569+kol-ratner@users.noreply.github.com"},
+]
+dependencies = [
+    "pydantic>=2.9.2",
+    "uvicorn>=0.32.0",
+    "asyncpg>=0.30.0",
+    "fastapi>=0.115.4",
+]
+requires-python = "==3.9.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.scripts]
+dev = "uvicorn src.restaurant_recommender.main:app --reload"
+start = "uvicorn src.restaurant_recommender.main:app"
+format = "autopep8 --in-place --recursive --aggressive --aggressive src/ tests/"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "autopep8>=2.3.1",
+    "Flake8-pyproject>=1.2.3",
+]
+
+[tool.flake8]
+ignore = [
+  "E501",
+  "W503",
+]
