@@ -47,7 +47,6 @@ jobs:
   CD:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    needs: CI
     permissions:
       contents: read
       packages: write
