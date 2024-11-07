@@ -166,3 +166,4 @@ async def list_restaurants():
                 "message": str(e)
             }
         )
+
