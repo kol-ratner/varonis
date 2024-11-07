@@ -37,6 +37,32 @@ async def startup():
     await db.init_db()
 
 
+@app.get("/healthz")
+async def health_check():
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"status": "healthy"}
+    )
+
+
+@app.get("/readyz")
+async def readiness_check():
+    try:
+        # Test database connection
+        async with db.pool.acquire() as conn:
+            await conn.fetchval("SELECT 1")
+
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"status": "ready"}
+        )
+    except Exception:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"status": "not ready"}
+        )
+
+
 @app.get("/recommend")
 async def recommend_restaurant(
     style: Optional[str] = None,
