@@ -1,7 +1,6 @@
 import asyncpg
 from datetime import time
 from typing import Optional
-import os
 
 from .models import (
     DatabaseConfig
@@ -10,6 +9,7 @@ from .models import (
 
 class DatabaseError(Exception):
     pass
+
 
 class Database:
     def __init__(self, config: DatabaseConfig):
@@ -42,15 +42,19 @@ class Database:
                 )
             ''')
 
-    async def get_matching_restaurant(self, style: str = None, vegetarian: bool = None, current_time: time = None):
+    async def get_matching_restaurant(
+            self,
+            style: str = None,
+            vegetarian: bool = None,
+            current_time: time = None):
         async with self.pool.acquire() as conn:
             query = '''
-                SELECT * FROM restaurants 
+                SELECT * FROM restaurants
                 WHERE ($1::varchar IS NULL OR style ILIKE $1)
                 AND ($2::boolean IS NULL OR vegetarian = $2)
                 AND ($3::time IS NULL OR (
                     (close_hour > open_hour AND open_hour <= $3 AND close_hour >= $3)
-                    OR 
+                    OR
                     (close_hour < open_hour AND (open_hour <= $3 OR close_hour >= $3))
                 ))
                 ORDER BY RANDOM()
@@ -58,16 +62,17 @@ class Database:
             '''
             return await conn.fetchrow(query, style, vegetarian, current_time)
 
-    async def add_restaurant(self, name: str, style: str, address: str, 
-                            open_hour: str, close_hour: str, 
-                            vegetarian: bool, delivers: bool):
+    async def add_restaurant(self, name: str, style: str, address: str,
+                             open_hour: str, close_hour: str,
+                             vegetarian: bool, delivers: bool):
 
         if await self.restaurant_exists(name, address):
-            raise DatabaseError("Restaurant with this name and address already exists")
+            raise DatabaseError(
+                "Restaurant with this name and address already exists")
 
         open_time = time.fromisoformat(open_hour)
         close_time = time.fromisoformat(close_hour)
-        
+
         try:
             async with self.pool.acquire() as conn:
                 return await conn.fetchrow('''
@@ -86,7 +91,7 @@ class Database:
         async with self.pool.acquire() as conn:
             query = '''
                 SELECT EXISTS(
-                    SELECT 1 FROM restaurants 
+                    SELECT 1 FROM restaurants
                     WHERE name = $1 AND address = $2
                 )
             '''

@@ -22,3 +22,16 @@ distribution = false
 [tool.pdm.scripts]
 dev = "uvicorn src.restaurant_recommender.main:app --reload"
 start = "uvicorn src.restaurant_recommender.main:app"
+format = "autopep8 --in-place --recursive --aggressive --aggressive src/ tests/"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "autopep8>=2.3.1",
+    "Flake8-pyproject>=1.2.3",
+]
+
+[tool.flake8]
+ignore = [
+  "E501",
+  "W503",
+]
