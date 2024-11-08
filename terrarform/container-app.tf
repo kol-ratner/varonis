@@ -5,12 +5,16 @@ resource "azurerm_container_app_environment" "env" {
   infrastructure_subnet_id = azurerm_subnet.app_subnet.id
 }
 
-resource "azurerm_container_app" "app" {
+resource "azurerm_container_app" "restaurant_recommender" {
   name                         = "restaurant-recommender"
   resource_group_name          = azurerm_resource_group.rg.name
   location                     = azurerm_resource_group.rg.location
   container_app_environment_id = azurerm_container_app_environment.env.id
   revision_mode                = "Single"
+
+  identity {
+    type = "SystemAssigned"
+  }
 
   template {
     container {
@@ -23,17 +27,26 @@ resource "azurerm_container_app" "app" {
         value = azurerm_postgresql_flexible_server.db.fqdn
       }
       env {
-        name  = "DB_NAME"
-        value = "restaurant_db"
-      }
-      env {
-        name  = "DB_USER"
-        value = azurerm_postgresql_flexible_server.db.administrator_login
-      }
-      env {
         name  = "DB_PORT"
         value = "5432"
       }
+      env {
+        name  = "DB_NAME"
+        value = azurerm_postgresql_flexible_server_database.restaurant_db.name
+      }
+      env {
+        name  = "DB_USER"
+        value = "restaurants_user"
+      }
+      env {
+        name  = "DB_PASSWORD"
+        value = "db-password"
+      }
     }
+  }
+
+  secret {
+    name  = "db-password"
+    value = azurerm_key_vault_secret.restaurants_user_password.value
   }
 }
