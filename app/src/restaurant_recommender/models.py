@@ -21,9 +21,10 @@ class Restaurant(BaseModel):
 
 
 class DatabaseConfig(BaseModel):
-    user: str
-    database: str
     host: str
     port: str
+    database: str
+    user: str
+    password: str
     min_pool_size: int = 5
     max_pool_size: int = 20

@@ -19,10 +19,11 @@ logger = logging.getLogger(__name__)
 
 db_config = DatabaseConfig(
     # Get connection details from environment variables with defaults
-    user=os.getenv("DB_USER", "postgres"),
-    database=os.getenv("DB_NAME", "restaurant_db"),
     host=os.getenv("DB_HOST", "localhost"),
-    port=os.getenv("DB_PORT", "5432")
+    port=os.getenv("DB_PORT", "5432"),
+    database=os.getenv("DB_NAME", "restaurant_db"),
+    user=os.getenv("DB_USER", "postgres"),
+    password=os.getenv("DB_PASSWORD", "postgres"),
 )
 
 db = Database(db_config)

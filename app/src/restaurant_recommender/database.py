@@ -17,15 +17,22 @@ class Database:
         self.pool: Optional[asyncpg.Pool] = None
 
     async def connect(self):
+        print(self.config.password)
         if not self.pool:
+            dsn = f"postgresql://{self.config.user}:{self.config.password}@{self.config.host}:{self.config.port}/{self.config.database}"
             self.pool = await asyncpg.create_pool(
-                user=self.config.user,
-                database=self.config.database,
-                host=self.config.host,
-                port=self.config.port,
+                dsn=dsn,
                 min_size=self.config.min_pool_size,
                 max_size=self.config.max_pool_size
             )
+
+    async def get_connection(self):
+        if not self.pool:
+            await self.connect()
+        return await self.pool.acquire()
+
+    async def release_connection(self, connection):
+        await self.pool.release(connection)
 
     async def init_db(self):
         async with self.pool.acquire() as conn:
@@ -42,12 +49,9 @@ class Database:
                 )
             ''')
 
-    async def get_matching_restaurant(
-            self,
-            style: str = None,
-            vegetarian: bool = None,
-            current_time: time = None):
-        async with self.pool.acquire() as conn:
+    async def get_matching_restaurant(self, style: str = None, vegetarian: bool = None, current_time: time = None):
+        conn = await self.get_connection()
+        try:
             query = '''
                 SELECT * FROM restaurants
                 WHERE ($1::varchar IS NULL OR style ILIKE $1)
@@ -61,6 +65,8 @@ class Database:
                 LIMIT 1
             '''
             return await conn.fetchrow(query, style, vegetarian, current_time)
+        finally:
+            await self.release_connection(conn)
 
     async def add_restaurant(self, name: str, style: str, address: str,
                              open_hour: str, close_hour: str,
@@ -73,22 +79,30 @@ class Database:
         open_time = time.fromisoformat(open_hour)
         close_time = time.fromisoformat(close_hour)
 
+        conn = await self.get_connection()
         try:
-            async with self.pool.acquire() as conn:
-                return await conn.fetchrow('''
-                    INSERT INTO restaurants (name, style, address, open_hour, close_hour, vegetarian, delivers)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    RETURNING *
-                ''', name, style, address, open_time, close_time, vegetarian, delivers)
+            return await conn.fetchrow('''
+                INSERT INTO restaurants (name, style, address, open_hour, close_hour, vegetarian, delivers)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING *
+            ''', name, style, address, open_time, close_time, vegetarian, delivers)
         except asyncpg.exceptions.PostgresError as e:
             raise DatabaseError(f"Failed to insert restaurant: {str(e)}")
-
+        finally:
+            await self.release_connection(conn)
+    
     async def get_all_restaurants(self):
-        async with self.pool.acquire() as conn:
+        conn = await self.get_connection()
+        try:
             return await conn.fetch('SELECT * FROM restaurants')
-
+        except asyncpg.exceptions.PostgresError as e:
+            raise DatabaseError(f"Failed to get all restaurants: {str(e)}")
+        finally:
+            await self.release_connection(conn)
+    
     async def restaurant_exists(self, name: str, address: str) -> bool:
-        async with self.pool.acquire() as conn:
+        conn = await self.get_connection()
+        try:
             query = '''
                 SELECT EXISTS(
                     SELECT 1 FROM restaurants
@@ -96,3 +110,7 @@ class Database:
                 )
             '''
             return await conn.fetchval(query, name, address)
+        except asyncpg.exceptions.PostgresError as e:
+            raise DatabaseError(f"Failed to check if restaurant exists: {str(e)}")
+        finally:
+            await self.release_connection(conn)
