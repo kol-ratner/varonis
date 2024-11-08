@@ -17,7 +17,6 @@ class Database:
         self.pool: Optional[asyncpg.Pool] = None
 
     async def connect(self):
-        print(self.config.password)
         if not self.pool:
             dsn = f"postgresql://{self.config.user}:{self.config.password}@{self.config.host}:{self.config.port}/{self.config.database}"
             self.pool = await asyncpg.create_pool(
@@ -49,7 +48,11 @@ class Database:
                 )
             ''')
 
-    async def get_matching_restaurant(self, style: str = None, vegetarian: bool = None, current_time: time = None):
+    async def get_matching_restaurant(
+            self,
+            style: str = None,
+            vegetarian: bool = None,
+            current_time: time = None):
         conn = await self.get_connection()
         try:
             query = '''
@@ -90,7 +93,7 @@ class Database:
             raise DatabaseError(f"Failed to insert restaurant: {str(e)}")
         finally:
             await self.release_connection(conn)
-    
+
     async def get_all_restaurants(self):
         conn = await self.get_connection()
         try:
@@ -99,7 +102,7 @@ class Database:
             raise DatabaseError(f"Failed to get all restaurants: {str(e)}")
         finally:
             await self.release_connection(conn)
-    
+
     async def restaurant_exists(self, name: str, address: str) -> bool:
         conn = await self.get_connection()
         try:
@@ -111,6 +114,7 @@ class Database:
             '''
             return await conn.fetchval(query, name, address)
         except asyncpg.exceptions.PostgresError as e:
-            raise DatabaseError(f"Failed to check if restaurant exists: {str(e)}")
+            raise DatabaseError(
+                f"Failed to check if restaurant exists: {str(e)}")
         finally:
             await self.release_connection(conn)
