@@ -1,0 +1,49 @@
+#!/bin/sh
+set -e
+
+
+# setting up the az client config 
+# Check Azure authentication
+if ! az account show &> /dev/null; then
+   az login
+
+fi
+
+export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+export ARM_TENANT_ID=$(az account show --query tenantId -o tsv)
+
+
+cd pre-tf
+
+terraform init
+terraform apply \
+    -target=azurerm_resource_group.rg \
+    -target=azuread_application.github_actions \
+    -target=azuread_application_registration.github_actions \
+    -target=azuread_service_principal.github_actions \
+    -target=azurerm_role_assignment.github_actions \
+    -target=azuread_application_federated_identity_credential.github_actions \
+    -target=azurerm_storage_account.tfstate \
+    -target=azurerm_storage_container.tfstate
+
+
+# Set GitHub repo variables using outputs
+
+# Check for gh CLI
+if ! command -v gh &> /dev/null; then
+    echo "GitHub CLI (gh) is required but not installed."
+    echo "Please install gh CLI for your platform: https://github.com/cli/cli#installation"
+    exit 1
+fi
+SUBSCRIPTION_ID=$(terraform output -raw subscription_id)
+CLIENT_ID=$(terraform output -raw github_actions_sp_client_id)
+TENANT_ID=$(terraform output -raw github_actions_sp_tenant_id)
+
+# Check GitHub authentication
+if ! gh auth status &> /dev/null; then
+    gh auth login
+fi
+
+gh variable set AZURE_CLIENT_ID --body "$CLIENT_ID"
+gh variable set AZURE_TENANT_ID --body "$TENANT_ID"
+gh variable set AZURE_SUBSCRIPTION_ID --body "$SUBSCRIPTION_ID"

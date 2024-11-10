@@ -1,0 +1,74 @@
+name: Terraform Workflow
+on:
+  pull_request:
+    branches: 
+      - "main"
+    paths:
+      - "terraform/*/**"
+  push:
+    branches: 
+      - "main"
+    paths:
+      - "terraform/*/**"
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  on_pr:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+  
+      - name: Terraform Init
+        run: terraform init
+  
+      - name: Terraform Plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color -out=tfplan
+  
+      - name: Upload Plan
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v3
+        with:
+          name: tf-plan
+          path: terraform/tfplan
+          retention-days: 5
+  on_merge:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+        id-token: write
+        contents: read
+    steps:
+      - name: Get PR Number
+        id: pr_number
+        run: |
+          PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '#\K[0-9]+')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Download Plan from PR
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          name: tf-plan
+          workflow: terraform.yaml
+          pr: ${{ steps.pr_number.outputs.PR_NUMBER }}
+          path: terraform
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+     
