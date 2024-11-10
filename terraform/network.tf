@@ -28,6 +28,17 @@ resource "azurerm_network_security_group" "pub_nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+  security_rule {
+    name                       = "allow-kubernetes-api"
+    priority                   = 120
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "6443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "pub" {
@@ -55,6 +66,17 @@ resource "azurerm_network_security_group" "priv_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "*"
+    source_address_prefix      = azurerm_subnet.pub_subnet.address_prefixes[0]
+    destination_address_prefix = azurerm_subnet.priv_subnet.address_prefixes[0]
+  }
+  security_rule {
+    name                       = "allow-kubectl-from-pub"
+    priority                   = 120
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "6443"
     source_address_prefix      = azurerm_subnet.pub_subnet.address_prefixes[0]
     destination_address_prefix = azurerm_subnet.priv_subnet.address_prefixes[0]
   }

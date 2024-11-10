@@ -18,20 +18,31 @@ resource "azurerm_network_interface" "k3s" {
   }
 }
 
+resource "azurerm_network_interface_security_group_association" "k3s" {
+  network_interface_id      = azurerm_network_interface.k3s.id
+  network_security_group_id = azurerm_network_security_group.priv_nsg.id
+}
+
+resource "random_id" "random_id" {
+  byte_length = 8
+}
+
+resource "azurerm_storage_account" "k3s" {
+  name                     = "diag${random_id.random_id.hex}"
+  location                 = data.azurerm_resource_group.rg.location
+  resource_group_name      = data.azurerm_resource_group.rg.name
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+
 resource "azurerm_linux_virtual_machine" "k3s" {
   name                = "k3s"
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
-  size                = "Standard_B2s"
-  admin_username      = "adminuser"
-  admin_ssh_key {
-    username   = "adminuser"
-    public_key = tls_private_key.ssh.public_key_openssh
-  }
-
   network_interface_ids = [
     azurerm_network_interface.k3s.id
   ]
+  size = "Standard_B2s"
 
   os_disk {
     caching              = "ReadWrite"
@@ -40,9 +51,16 @@ resource "azurerm_linux_virtual_machine" "k3s" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
+  }
+
+  computer_name  = "hostname"
+  admin_username = "adminuser"
+
+  boot_diagnostics {
+    storage_account_uri = azurerm_storage_account.k3s.primary_blob_endpoint
   }
 
   custom_data = base64encode(<<-EOF
@@ -53,15 +71,4 @@ resource "azurerm_linux_virtual_machine" "k3s" {
     sudo chown adminuser:adminuser /home/adminuser/kubeconfig.yaml
   EOF
   )
-}
-
-resource "tls_private_key" "ssh" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-resource "local_file" "private_key" {
-  content         = tls_private_key.ssh.private_key_pem
-  filename        = "k3s-ssh-key.pem"
-  file_permission = "0600"
 }
