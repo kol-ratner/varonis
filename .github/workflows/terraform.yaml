@@ -58,10 +58,13 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
-        id-token: write
-        contents: read
-        actions: read
-        pull-requests: read
+      id-token: write
+      contents: read
+      actions: read
+      pull-requests: read
+    defaults:
+      run:
+        working-directory: terraform
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
