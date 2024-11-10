@@ -6,7 +6,7 @@ resource "azurerm_virtual_network" "vnet" {
 }
 
 resource "azurerm_subnet" "pub_subnet" {
-  name                 = "pub-subnet-${azurerm_resource_group.rg.location}"
+  name                 = "pub-subnet-${data.azurerm_resource_group.rg.location}"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = ["10.0.1.0/24"]
@@ -36,7 +36,7 @@ resource "azurerm_subnet_network_security_group_association" "pub" {
 }
 
 resource "azurerm_subnet" "priv_subnet" {
-  name                 = "priv-subnet-${azurerm_resource_group.rg.location}"
+  name                 = "priv-subnet-${data.azurerm_resource_group.rg.location}"
   resource_group_name  = data.azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = ["10.0.2.0/24"]
