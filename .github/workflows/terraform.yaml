@@ -1,5 +1,6 @@
 name: Terraform Workflow
 on:
+  workflow_dispatch: {}
   pull_request:
     branches: 
       - "main"
@@ -62,6 +63,11 @@ jobs:
         actions: read
         pull-requests: read
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Azure login
         uses: azure/login@v2
         with:
