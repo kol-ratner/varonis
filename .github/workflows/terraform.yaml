@@ -4,12 +4,12 @@ on:
     branches: 
       - "main"
     paths:
-      - "terraform/*/**"
+      - "terraform/*"
   push:
     branches: 
       - "main"
     paths:
-      - "terraform/*/**"
+      - "terraform/*"
 permissions:
   id-token: write
   contents: read

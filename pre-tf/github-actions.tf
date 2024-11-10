@@ -21,10 +21,6 @@ resource "azuread_application" "github_actions" {
   owners       = [data.azuread_client_config.current.object_id]
 }
 
-resource "azuread_application_registration" "github_actions" {
-  display_name = "github-actions-terraform"
-}
-
 resource "azuread_service_principal" "github_actions" {
   client_id                    = azuread_application.github_actions.client_id
   app_role_assignment_required = false
@@ -37,11 +33,20 @@ resource "azurerm_role_assignment" "github_actions" {
   principal_id         = azuread_service_principal.github_actions.object_id
 }
 
-resource "azuread_application_federated_identity_credential" "github_actions" {
-  application_id = azuread_application_registration.github_actions.id
-  display_name   = "github-actions-terraform"
+resource "azuread_application_federated_identity_credential" "main_branch" {
+  application_id = azuread_application.github_actions.id
+  display_name   = "github-actions-terraform-push"
   description    = "Terraform via github actions"
   audiences      = ["api://AzureADTokenExchange"]
   issuer         = "https://token.actions.githubusercontent.com"
-  subject        = "repo:kol-ratner/varonis:*"
+  subject        = "repo:kol-ratner/varonis:ref:refs/heads/main"
+}
+
+resource "azuread_application_federated_identity_credential" "pull_request" {
+  application_id = azuread_application.github_actions.id
+  display_name   = "github-actions-terraform-pr"
+  description    = "Terraform via github actions"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:kol-ratner/varonis:pull_request"
 }
