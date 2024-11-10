@@ -57,7 +57,7 @@ resource "azurerm_linux_virtual_machine" "k3s" {
   }
 
   computer_name  = "hostname"
-  admin_username = "admin"
+  admin_username = "adminuser"
 
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.k3s.primary_blob_endpoint
