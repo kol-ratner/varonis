@@ -1,7 +1,7 @@
 terraform {
   backend "azurerm" {
     resource_group_name  = "restaurant-recommender-rg"
-    storage_account_name = "terraform"
+    storage_account_name = "tfstaterestaurantrec"
     container_name       = "tfstate"
     key                  = "terraform.tfstate"
     use_oidc             = true
