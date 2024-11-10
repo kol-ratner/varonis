@@ -24,10 +24,6 @@ resource "azurerm_linux_virtual_machine" "k3s" {
   location            = data.azurerm_resource_group.rg.location
   size                = "Standard_B2s"
   admin_username      = "adminuser"
-  admin_ssh_key {
-    username   = "adminuser"
-    public_key = tls_private_key.ssh.public_key_openssh
-  }
 
   network_interface_ids = [
     azurerm_network_interface.k3s.id
@@ -53,15 +49,4 @@ resource "azurerm_linux_virtual_machine" "k3s" {
     sudo chown adminuser:adminuser /home/adminuser/kubeconfig.yaml
   EOF
   )
-}
-
-resource "tls_private_key" "ssh" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-resource "local_file" "private_key" {
-  content         = tls_private_key.ssh.private_key_pem
-  filename        = "k3s-ssh-key.pem"
-  file_permission = "0600"
 }
