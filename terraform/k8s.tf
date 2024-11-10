@@ -35,6 +35,11 @@ resource "azurerm_storage_account" "k3s" {
   account_replication_type = "LRS"
 }
 
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
 resource "azurerm_linux_virtual_machine" "k3s" {
   name                = "k3s"
   resource_group_name = data.azurerm_resource_group.rg.name
@@ -58,6 +63,10 @@ resource "azurerm_linux_virtual_machine" "k3s" {
 
   computer_name  = "hostname"
   admin_username = "adminuser"
+  admin_ssh_key {
+    username   = "adminuser"
+    public_key = tls_private_key.ssh.public_key_openssh
+  }
 
   boot_diagnostics {
     storage_account_uri = azurerm_storage_account.k3s.primary_blob_endpoint
