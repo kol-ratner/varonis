@@ -23,6 +23,10 @@ resource "azurerm_network_interface_security_group_association" "k3s" {
   network_security_group_id = azurerm_network_security_group.priv_nsg.id
 }
 
+resource "random_id" "random_id" {
+  byte_length = 8
+}
+
 resource "azurerm_storage_account" "k3s" {
   name                     = "diag${random_id.random_id.hex}"
   location                 = data.azurerm_resource_group.rg.location
