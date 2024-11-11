@@ -28,7 +28,7 @@ resource "azurerm_linux_virtual_machine" "k3s" {
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
   network_interface_ids = [
-    azurerm_network_interface.k3s.id
+    azurerm_network_interface.k3s_node.id
   ]
   size = "Standard_B2s"
 
