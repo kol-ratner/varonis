@@ -1,4 +1,3 @@
-
 resource "azurerm_postgresql_flexible_server" "db" {
   name                = "restaurant-db"
   resource_group_name = data.azurerm_resource_group.rg.name
