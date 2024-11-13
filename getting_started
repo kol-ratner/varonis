@@ -22,7 +22,8 @@ terraform apply \
     -target=azuread_application_registration.github_actions \
     -target=azuread_service_principal.github_actions \
     -target=azurerm_role_assignment.github_actions \
-    -target=azuread_application_federated_identity_credential.github_actions \
+    -target=azuread_application_federated_identity_credential.main_branch \
+    -target=azuread_application_federated_identity_credential.pull_request \
     -target=azurerm_storage_account.tfstate \
     -target=azurerm_storage_container.tfstate
 
