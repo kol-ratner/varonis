@@ -6,9 +6,9 @@ resource "azurerm_container_app_environment" "env" {
 }
 
 resource "azurerm_container_app" "restaurant_recommender" {
-  name                         = "restaurant-recommender"
-  resource_group_name          = data.azurerm_resource_group.rg.name
-  location                     = data.azurerm_resource_group.rg.location
+  name                = "restaurant-recommender"
+  resource_group_name = data.azurerm_resource_group.rg.name
+  #   location                     = data.azurerm_resource_group.rg.location
   container_app_environment_id = azurerm_container_app_environment.env.id
   revision_mode                = "Single"
 
