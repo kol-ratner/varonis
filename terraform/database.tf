@@ -2,6 +2,7 @@ resource "azurerm_postgresql_flexible_server" "db" {
   name                = "restaurant-db"
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
+  sku_name            = "B_Standard_B1ms"
   version             = "14"
 
   storage_mb = 32768
@@ -9,10 +10,11 @@ resource "azurerm_postgresql_flexible_server" "db" {
   administrator_login    = "psqladmin"
   administrator_password = azurerm_key_vault_secret.db_admin_password.value
 
-  zone = "1"
+  zone                          = "1"
+  public_network_access_enabled = false
 
-  #   private_dns_zone_id = azurerm_private_dns_zone.priv.id
   delegated_subnet_id = azurerm_subnet.priv_subnet.id
+  private_dns_zone_id = azurerm_private_dns_zone.db.id
 }
 
 resource "azurerm_postgresql_flexible_server_configuration" "restaurants_user" {
