@@ -6,17 +6,6 @@ resource "azurerm_key_vault" "kv" {
   sku_name            = "standard"
 }
 
-resource "random_password" "db_admin" {
-  length  = 20
-  special = true
-}
-
-resource "azurerm_key_vault_secret" "db_admin_password" {
-  name         = "db-admin-password"
-  value        = random_password.db_admin.result
-  key_vault_id = azurerm_key_vault.kv.id
-}
-
 resource "random_password" "restaurants_user_password" {
   length  = 20
   special = true
