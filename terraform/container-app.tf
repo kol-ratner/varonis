@@ -1,40 +1,3 @@
-resource "azurerm_container_app_environment" "env" {
-  name                       = "restaurant-recommender-env"
-  location                   = data.azurerm_resource_group.rg.location
-  resource_group_name        = data.azurerm_resource_group.rg.name
-  infrastructure_subnet_id   = azurerm_subnet.priv_subnet.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.logs.id
-}
-
-resource "random_id" "random_id" {
-  byte_length = 4
-}
-
-resource "azurerm_log_analytics_workspace" "logs" {
-  name                = "restaurant-recommender-logs"
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  sku                 = "PerGB2018"
-  retention_in_days   = 30
-}
-
-resource "azurerm_storage_account" "restaurants" {
-  name                     = "restaurants${random_id.random_id.hex}"
-  location                 = data.azurerm_resource_group.rg.location
-  resource_group_name      = data.azurerm_resource_group.rg.name
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-}
-
-resource "azurerm_container_app_environment_storage" "postgres" {
-  name                         = "postgres-storage"
-  container_app_environment_id = azurerm_container_app_environment.env.id
-  account_name                 = "postgres"
-  share_name                   = "postgresql"
-  access_mode                  = "ReadWrite"
-  access_key                   = azurerm_storage_account.restaurants.primary_access_key
-}
-
 resource "azurerm_container_app" "restaurant_recommender" {
   name                         = "restaurant-recommender"
   container_app_environment_id = azurerm_container_app_environment.env.id
@@ -60,6 +23,14 @@ resource "azurerm_container_app" "restaurant_recommender" {
         name  = "DB_PORT"
         value = "5432"
       }
+      env {
+        name  = "DB_USER"
+        value = "restaurants_user"
+      }
+      env {
+        name        = "DB_PASSWORD"
+        secret_name = "db-password"
+      }
     }
 
     container {
@@ -84,6 +55,12 @@ resource "azurerm_container_app" "restaurant_recommender" {
       volume_mounts {
         name = "postgres-data"
         path = "/var/lib/postgresql/data"
+      }
+
+      liveness_probe {
+        initial_delay = 15
+        port          = 5432
+        transport     = "TCP"
       }
     }
 
